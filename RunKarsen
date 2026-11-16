@@ -1,0 +1,59 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+
+ENTITY TIMER_CONTROL IS
+    PORT (
+        CLOCK      : IN STD_LOGIC;
+        RESETN     : IN STD_LOGIC;
+        IO_ADDR    : IN STD_LOGIC_VECTOR(10 DOWNTO 0);
+        IO_WRITE   : IN STD_LOGIC;
+        RUN_CTRL   : OUT STD_LOGIC
+    );
+END TIMER_CONTROL;
+
+ARCHITECTURE Behavioral OF TIMER_CONTROL IS
+
+    -- Internal signal to track timer state
+    SIGNAL timer_running : STD_LOGIC := '0';
+
+    -- Register addresses
+    CONSTANT PLAY_ADDR  : STD_LOGIC_VECTOR(10 DOWNTO 0)
+                        := "00001110000"; -- 0x70
+
+    CONSTANT PAUSE_ADDR : STD_LOGIC_VECTOR(10 DOWNTO 0)
+                        := "00001110001"; -- 0x71
+
+BEGIN
+
+    PROCESS(CLOCK, RESETN)
+    BEGIN
+
+        -- Reset timer control
+        IF RESETN = '0' THEN
+            timer_running <= '0';
+
+        ELSIF rising_edge(CLOCK) THEN
+
+            -- Check for processor write
+            IF IO_WRITE = '1' THEN
+
+                -- PLAY register
+                IF IO_ADDR = PLAY_ADDR THEN
+                    timer_running <= '1';
+
+                -- PAUSE register
+                ELSIF IO_ADDR = PAUSE_ADDR THEN
+                    timer_running <= '0';
+
+                END IF;
+
+            END IF;
+
+        END IF;
+
+    END PROCESS;
+
+    -- Send timer state to the counter
+    RUN_CTRL <= timer_running;
+
+END Behavioral;
